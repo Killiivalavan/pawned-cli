@@ -23,30 +23,30 @@ jobs:
       - name: Build binaries
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
-          LDFLAGS="-s -w -X pawned-cli/cmd.version=${VERSION}"
+          LDFLAGS="-s -w -X chesshell-cli/cmd.version=${VERSION}"
           
           echo "Building for Linux amd64..."
-          GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o pawned-linux-amd64 main.go
+          GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o chesshell-linux-amd64 main.go
           
           echo "Building for Linux arm64..."
-          GOOS=linux GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o pawned-linux-arm64 main.go
+          GOOS=linux GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o chesshell-linux-arm64 main.go
           
           echo "Building for macOS amd64..."
-          GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o pawned-darwin-amd64 main.go
+          GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o chesshell-darwin-amd64 main.go
           
           echo "Building for macOS arm64..."
-          GOOS=darwin GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o pawned-darwin-arm64 main.go
+          GOOS=darwin GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o chesshell-darwin-arm64 main.go
           
           echo "Building for Windows amd64..."
-          GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o pawned-windows-amd64.exe main.go
+          GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o chesshell-windows-amd64.exe main.go
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
           name: Release ${{ github.ref_name }}
           files: |
-            pawned-linux-amd64
-            pawned-linux-arm64
-            pawned-darwin-amd64
-            pawned-darwin-arm64
-            pawned-windows-amd64.exe
+            chesshell-linux-amd64
+            chesshell-linux-arm64
+            chesshell-darwin-amd64
+            chesshell-darwin-arm64
+            chesshell-windows-amd64.exe

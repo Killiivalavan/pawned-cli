@@ -1,4 +1,4 @@
-# pawned: Chess Drill CLI
+# chesshell: Chess Drill CLI
 
 A minimal, elegant command-line tool that fetches chess puzzles from Lichess and lets users solve them directly in the terminal.
 
@@ -10,21 +10,22 @@ Built for developers and terminal power users who want a quick chess puzzle fix 
 - **Zero config:** Works immediately after install.
 - **Local-first:** All user data (stats, history) lives on your machine.
 - **Single binary:** Fast, self-contained executable.
+- **Local AI:** Play full games vs Stockfish (downloads on first use).
 
 ## Installation
 
 ### macOS and Linux
-Install `pawned` using our quick installer script:
+Install `chesshell` using our quick installer script:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Killiivalavan/pawned-cli/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Killiivalavan/chesshell-cli/main/install.sh | bash
 ```
 
 ### Windows
-Open PowerShell as an Administrator and run the following command to automatically download and install `pawned` and add it to your PATH:
+Open PowerShell as an Administrator and run the following command to automatically download and install `chesshell` and add it to your PATH:
 
 ```powershell
-iwr -useb https://raw.githubusercontent.com/Killiivalavan/pawned-cli/main/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/Killiivalavan/chesshell-cli/main/install.ps1 | iex
 ```
 
 ## Usage
@@ -34,7 +35,7 @@ iwr -useb https://raw.githubusercontent.com/Killiivalavan/pawned-cli/main/instal
 Fetch today's featured puzzle from Lichess and start an interactive session:
 
 ```bash
-pawned play
+chesshell play
 ```
 
 ### Play a Specific Puzzle
@@ -42,25 +43,26 @@ pawned play
 If you know the Lichess ID of a puzzle, you can play it directly:
 
 ```bash
-pawned play --id pId3s
+chesshell play --id pId3s
 ```
 
-### Play against Local AI (New in v2!)
+### Play against Local AI
 
 Play a full chess game directly in your terminal against the world-class Stockfish engine! You'll be prompted to select your difficulty from Beginner to Expert.
 
-*(Note: The first time you run this command, `pawned` will seamlessly download the ~50MB Stockfish binary for your OS. It runs entirely locally on your machine.)*
+*(Note: The first time you run this command, `chesshell` will seamlessly download the ~50MB Stockfish binary for your OS. It runs entirely locally on your machine.)*
 
 ```bash
-pawned play --ai
+chesshell play --ai
 ```
+Difficulty is selected interactively (1–5), and `q`/`quit` abandons the game. (`hint` is not available in AI games.)
 
 ### View Your Stats
 
 Check your progress, including total puzzles solved, your accuracy, and your record against the AI:
 
 ```bash
-pawned stats
+chesshell stats
 ```
 
 ### View History
@@ -68,20 +70,22 @@ pawned stats
 See a table of your most recently attempted puzzles:
 
 ```bash
-pawned history
+chesshell history
 ```
 
 You can limit the number of entries shown using the `--limit` flag:
 
 ```bash
-pawned history --limit 5
+chesshell history --limit 5
 ```
 
 ## How It Works
 
-`pawned` interacts with the public, unauthenticated endpoints of the [Lichess API](https://lichess.org/api) to fetch puzzle data and PGN move sequences. 
+`chesshell` interacts with the public, unauthenticated endpoints of the [Lichess API](https://lichess.org/api) to fetch puzzle data and PGN move sequences. 
 
 The application reconstructs the board state locally and validates your inputs against the puzzle's solution. All of your personal statistics and history are saved locally on your machine in a simple `data.json` file.
+
+For AI games, `chesshell` runs Stockfish locally via the UCI protocol. If Stockfish is not found on your system `PATH`, `chesshell` caches a downloaded copy under your OS config directory.
 
 ## Input Format
 

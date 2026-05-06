@@ -19,10 +19,10 @@ type AIGames struct {
 
 // Stats holds the user's aggregate puzzle-solving statistics.
 type Stats struct {
-	TotalAttempted int       `json:"totalAttempted"`
-	TotalSolved    int       `json:"totalSolved"`
-	CurrentStreak  int       `json:"currentStreak"`
-	BestStreak     int       `json:"bestStreak"`
+	TotalAttempted int        `json:"totalAttempted"`
+	TotalSolved    int        `json:"totalSolved"`
+	CurrentStreak  int        `json:"currentStreak"`
+	BestStreak     int        `json:"bestStreak"`
 	FirstPlayedAt  *time.Time `json:"firstPlayedAt,omitempty"`
 	LastPlayedAt   *time.Time `json:"lastPlayedAt,omitempty"`
 }

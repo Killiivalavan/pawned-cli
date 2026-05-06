@@ -6,9 +6,9 @@ import (
 	"io"
 	"strings"
 
+	"chesshell-cli/internal/api"
+	"chesshell-cli/internal/board"
 	"github.com/fatih/color"
-	"pawned-cli/internal/api"
-	"pawned-cli/internal/board"
 )
 
 // Session manages the state and flow of a single puzzle-solving session.

@@ -22,6 +22,8 @@ go.work.sum
 # Go binaries, regardless of name
 pawned
 pawned-*
+chesshell
+chesshell-*
 /bin/
 /pkg/
 

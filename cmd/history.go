@@ -1,9 +1,9 @@
 package cmd
 
 import (
+	"chesshell-cli/internal/store"
 	"fmt"
 	"os"
-	"pawned-cli/internal/store"
 	"strings"
 	"text/tabwriter"
 
@@ -34,7 +34,7 @@ var historyCmd = &cobra.Command{
 		// Initialize tabwriter for table formatting
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		headerColor := color.New(color.Bold)
-		
+
 		fmt.Println()
 		headerColor.Fprintln(w, "Date\tPuzzle ID\tRating\tThemes\tResult\tAttempts")
 		headerColor.Fprintln(w, "----\t---------\t------\t------\t------\t--------")
@@ -52,9 +52,9 @@ var historyCmd = &cobra.Command{
 		// Iterate backwards to show newest first
 		for i := startIdx; i >= endIdx; i-- {
 			item := data.History[i]
-			
+
 			dateStr := item.AttemptedAt.Format("2006-01-02 15:04")
-			
+
 			// Format themes (truncate if too long for the table)
 			themesStr := strings.Join(item.Themes, ", ")
 			if len(themesStr) > 30 {
@@ -80,7 +80,7 @@ var historyCmd = &cobra.Command{
 				item.Attempts,
 			)
 		}
-		
+
 		w.Flush()
 		fmt.Println()
 	},

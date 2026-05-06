@@ -1,10 +1,10 @@
 #!/bin/bash
-# Installer script for pawned
+# Installer script for chesshell
 
 set -e
 
-REPO="Killiivalavan/pawned-cli"
-BIN_NAME="pawned"
+REPO="Killiivalavan/chesshell-cli"
+BIN_NAME="chesshell"
 BIN_DIR="$HOME/.local/bin"
 
 # Detect OS

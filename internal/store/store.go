@@ -8,9 +8,10 @@ import (
 )
 
 const (
-	dataFileName = "data.json"
-	appName      = "pawned"
-	fileVersion  = 1
+	dataFileName  = "data.json"
+	appName       = "chesshell"
+	legacyAppName = "pawned"
+	fileVersion   = 1
 )
 
 var (
@@ -27,6 +28,15 @@ func getPath() (string, error) {
 	return filepath.Join(appDir, dataFileName), nil
 }
 
+func getLegacyPath() (string, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	appDir := filepath.Join(configDir, legacyAppName)
+	return filepath.Join(appDir, dataFileName), nil
+}
+
 // Load reads the data file from disk.
 // If the file doesn't exist, it returns a new, empty Data object.
 // If the file is corrupted, it backs it up and returns an empty Data object.
@@ -39,8 +49,23 @@ func Load() (*Data, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// File doesn't exist, return a fresh Data object
-			return &Data{Version: fileVersion, History: []HistoryItem{}}, nil
+			legacyPath, legacyErr := getLegacyPath()
+			if legacyErr != nil {
+				return &Data{Version: fileVersion, History: []HistoryItem{}}, nil
+			}
+
+			legacyFile, legacyOpenErr := os.Open(legacyPath)
+			if legacyOpenErr != nil {
+				return &Data{Version: fileVersion, History: []HistoryItem{}}, nil
+			}
+			defer legacyFile.Close()
+
+			var legacyData Data
+			if decodeErr := json.NewDecoder(legacyFile).Decode(&legacyData); decodeErr != nil {
+				return &Data{Version: fileVersion, History: []HistoryItem{}}, ErrCorruptedFile
+			}
+
+			return &legacyData, nil
 		}
 		return nil, err // Other file-opening error
 	}

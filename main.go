@@ -1,6 +1,6 @@
 package main
 
-import "pawned-cli/cmd"
+import "chesshell-cli/cmd"
 
 func main() {
 	cmd.Execute()

@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"bufio"
+	"chesshell-cli/internal/api"
+	"chesshell-cli/internal/engine"
+	"chesshell-cli/internal/puzzle"
+	"chesshell-cli/internal/store"
 	"fmt"
 	"os"
-	"pawned-cli/internal/api"
-	"pawned-cli/internal/engine"
-	"pawned-cli/internal/puzzle"
-	"pawned-cli/internal/store"
 	"strconv"
 	"strings"
 	"time"
@@ -44,14 +44,14 @@ func runAIGame() {
 	fmt.Println("3. Intermediate")
 	fmt.Println("4. Advanced")
 	fmt.Println("5. Expert")
-	
+
 	reader := bufio.NewReader(os.Stdin)
 	var difficulty int
 	for {
 		fmt.Print("\nEnter choice (1-5): ")
 		input, _ := reader.ReadString('\n')
 		input = strings.TrimSpace(input)
-		
+
 		val, err := strconv.Atoi(input)
 		if err == nil && val >= 1 && val <= 5 {
 			difficulty = val

@@ -1,4 +1,4 @@
-module pawned-cli
+module chesshell-cli
 
 go 1.26.2
 

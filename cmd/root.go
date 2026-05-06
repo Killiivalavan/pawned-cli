@@ -8,9 +8,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "pawned",
+	Use:   "chesshell",
 	Short: "A minimal, elegant, command-line chess puzzle tool.",
-	Long: `pawned is a CLI tool that fetches chess puzzles from Lichess
+	Long: `chesshell is a CLI tool that fetches chess puzzles from Lichess
 and lets users solve them directly in the terminal.
 
 No account required, no configuration needed. All stats and history

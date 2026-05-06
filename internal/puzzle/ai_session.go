@@ -6,9 +6,9 @@ import (
 	"io"
 	"strings"
 
+	"chesshell-cli/internal/board"
+	"chesshell-cli/internal/engine"
 	"github.com/fatih/color"
-	"pawned-cli/internal/board"
-	"pawned-cli/internal/engine"
 )
 
 // AISession manages a full game session against the Stockfish AI.

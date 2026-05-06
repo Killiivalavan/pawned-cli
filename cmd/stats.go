@@ -1,9 +1,9 @@
 package cmd
 
 import (
+	"chesshell-cli/internal/store"
 	"fmt"
 	"os"
-	"pawned-cli/internal/store"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -28,7 +28,7 @@ var statsCmd = &cobra.Command{
 		header.Println("Your Stats")
 
 		if stats.TotalAttempted == 0 {
-			fmt.Println("\nNo puzzles played yet. Use 'pawned play' to start!")
+			fmt.Println("\nNo puzzles played yet. Use 'chesshell play' to start!")
 			return
 		}
 
@@ -56,7 +56,7 @@ var statsCmd = &cobra.Command{
 		fmt.Println()
 		header.Println("AI Games")
 		if data.AIGames.Wins == 0 && data.AIGames.Losses == 0 && data.AIGames.Draws == 0 {
-			fmt.Println("\nNo AI games played yet. Use 'pawned play --ai' to start!")
+			fmt.Println("\nNo AI games played yet. Use 'chesshell play --ai' to start!")
 		} else {
 			totalAIGames := data.AIGames.Wins + data.AIGames.Losses + data.AIGames.Draws
 			winRate := 0.0

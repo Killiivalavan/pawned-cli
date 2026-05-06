@@ -1,23 +1,23 @@
 <#
 .SYNOPSIS
-Installer script for pawned CLI tool on Windows.
+Installer script for chesshell CLI tool on Windows.
 
 .DESCRIPTION
-This script automatically downloads the latest release of pawned-windows-amd64.exe
+This script automatically downloads the latest release of chesshell-windows-amd64.exe
 from GitHub, places it in the user's LocalAppData folder, and adds that folder
 to the user's PATH environment variable.
 #>
 
 $ErrorActionPreference = "Stop"
 
-$Repo = "Killiivalavan/pawned-cli"
-$BinName = "pawned.exe"
-$InstallDir = Join-Path $env:LOCALAPPDATA "pawned\bin"
+$Repo = "Killiivalavan/chesshell-cli"
+$BinName = "chesshell.exe"
+$InstallDir = Join-Path $env:LOCALAPPDATA "chesshell\bin"
 $BinPath = Join-Path $InstallDir $BinName
-$AssetPattern = "pawned-windows-x86_64*" # This will match our generated asset. Wait, we built pawned-windows-amd64.exe
+$AssetPattern = "chesshell-windows-x86_64*" # This will match our generated asset. Wait, we built chesshell-windows-amd64.exe
 
 # Correct asset pattern
-$AssetPattern = "pawned-windows-amd64.exe"
+$AssetPattern = "chesshell-windows-amd64.exe"
 
 Write-Host "Fetching latest release information..."
 $ApiUrl = "https://api.github.com/repos/$Repo/releases/latest"
@@ -35,7 +35,7 @@ if (-not $DownloadUrl) {
     Write-Error "Could not find release asset for Windows amd64."
 }
 
-Write-Host "Downloading pawned to $InstallDir..."
+Write-Host "Downloading chesshell to $InstallDir..."
 if (-not (Test-Path $InstallDir)) {
     New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 }
@@ -53,14 +53,14 @@ if ($UserPath -notlike "*$InstallDir*") {
     
     Write-Host ""
     Write-Host "==========================================================="
-    Write-Host "pawned has been installed to $InstallDir and added to your PATH."
+    Write-Host "chesshell has been installed to $InstallDir and added to your PATH."
     Write-Host "You must RESTART YOUR TERMINAL (or open a new tab) for the PATH changes to take effect."
-    Write-Host "Then, you can run: pawned help"
+    Write-Host "Then, you can run: chesshell help"
     Write-Host "==========================================================="
 } else {
     Write-Host ""
     Write-Host "==========================================================="
-    Write-Host "pawned has been updated at $InstallDir."
-    Write-Host "Run: pawned help"
+    Write-Host "chesshell has been updated at $InstallDir."
+    Write-Host "Run: chesshell help"
     Write-Host "==========================================================="
 }

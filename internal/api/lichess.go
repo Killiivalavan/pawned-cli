@@ -54,7 +54,7 @@ func (c *Client) fetchAndDecode(url string) (*LichessPuzzle, error) {
 	}
 
 	// The Lichess API prefers a User-Agent.
-	req.Header.Set("User-Agent", "pawned-cli/v1")
+	req.Header.Set("User-Agent", "chesshell-cli/v1")
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {

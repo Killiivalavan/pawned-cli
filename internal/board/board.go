@@ -25,10 +25,10 @@ func NewGame() *Board {
 // string in SAN (Standard Algebraic Notation), not a full PGN with headers.
 func NewFromPGN(pgn string) (*Board, error) {
 	game := chess.NewGame()
-	
+
 	// The Lichess API returns moves separated by spaces
 	moves := strings.Split(strings.TrimSpace(pgn), " ")
-	
+
 	for _, m := range moves {
 		if m == "" {
 			continue
@@ -37,7 +37,7 @@ func NewFromPGN(pgn string) (*Board, error) {
 			return nil, fmt.Errorf("failed to apply move '%s' from PGN: %w", m, err)
 		}
 	}
-	
+
 	return &Board{game: game}, nil
 }
 
