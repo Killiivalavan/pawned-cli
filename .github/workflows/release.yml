@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*' # Trigger on tags like v1.0.0
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Need permission to create a release and upload assets
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22' # Or whatever your preferred minimum Go version is
+
+      - name: Build binaries
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          LDFLAGS="-s -w -X pawned-cli/cmd.version=${VERSION}"
+          
+          echo "Building for Linux amd64..."
+          GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o pawned-linux-amd64 main.go
+          
+          echo "Building for Linux arm64..."
+          GOOS=linux GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o pawned-linux-arm64 main.go
+          
+          echo "Building for macOS amd64..."
+          GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o pawned-darwin-amd64 main.go
+          
+          echo "Building for macOS arm64..."
+          GOOS=darwin GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o pawned-darwin-arm64 main.go
+          
+          echo "Building for Windows amd64..."
+          GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o pawned-windows-amd64.exe main.go
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          files: |
+            pawned-linux-amd64
+            pawned-linux-arm64
+            pawned-darwin-amd64
+            pawned-darwin-arm64
+            pawned-windows-amd64.exe

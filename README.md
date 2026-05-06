@@ -1,0 +1,86 @@
+# pawned: Chess Drill CLI
+
+A minimal, elegant command-line tool that fetches chess puzzles from Lichess and lets users solve them directly in the terminal.
+
+Built for developers and terminal power users who want a quick chess puzzle fix without leaving their command line. No account required, no configuration needed.
+
+## Features
+
+- **Zero auth:** No Lichess account required.
+- **Zero config:** Works immediately after install.
+- **Local-first:** All user data (stats, history) lives on your machine.
+- **Single binary:** Fast, self-contained executable.
+
+## Installation
+
+Install `pawned` using our quick installer script. This works on macOS and Linux.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/pawned-cli/pawned/main/install.sh | bash
+```
+
+*(Note: Replace `pawned-cli` in the URL with your actual GitHub username if you fork or host this yourself).*
+
+## Usage
+
+### Play the Daily Puzzle
+
+Fetch today's featured puzzle from Lichess and start an interactive session:
+
+```bash
+pawned play
+```
+
+### Play a Specific Puzzle
+
+If you know the Lichess ID of a puzzle, you can play it directly:
+
+```bash
+pawned play --id pId3s
+```
+
+### View Your Stats
+
+Check your progress, including total puzzles solved and your accuracy:
+
+```bash
+pawned stats
+```
+
+### View History
+
+See a table of your most recently attempted puzzles:
+
+```bash
+pawned history
+```
+
+You can limit the number of entries shown using the `--limit` flag:
+
+```bash
+pawned history --limit 5
+```
+
+## How It Works
+
+`pawned` interacts with the public, unauthenticated endpoints of the [Lichess API](https://lichess.org/api) to fetch puzzle data and PGN move sequences. 
+
+The application reconstructs the board state locally and validates your inputs against the puzzle's solution. All of your personal statistics and history are saved locally on your machine in a simple `data.json` file.
+
+## Input Format
+
+When playing a puzzle, enter your moves using **UCI (Universal Chess Interface) notation**.
+
+- Example: `e2e4` (moves a piece from e2 to e4)
+- Captures: `f3d5` (moves a piece from f3 to capture on d5)
+- Promotion: `e7e8q` (promotes a pawn on e8 to a queen)
+
+If you get stuck, type `hint` (or `h`) to see which square the correct piece moves from. Type `quit` (or `q`) to abandon the puzzle.
+
+## Contributing
+
+Contributions are welcome! Please ensure that your pull requests adhere to the core principles of the project: simple, elegant, efficient, and quick. Avoid scope creep.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
