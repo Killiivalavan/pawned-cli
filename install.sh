@@ -38,8 +38,8 @@ if [ -z "$LATEST_RELEASE_JSON" ]; then
     exit 1
 fi
 
-# Extract the download URL for the specific asset using basic grep/awk (avoiding jq dependency)
-DOWNLOAD_URL=$(echo "$LATEST_RELEASE_JSON" | grep -oP "(?<=\"browser_download_url\": \")[^\"]*" | grep "${ASSET_NAME}$")
+# Extract the download URL for the specific asset using cross-platform grep (works on both Linux and macOS)
+DOWNLOAD_URL=$(echo "$LATEST_RELEASE_JSON" | grep "browser_download_url" | grep "${ASSET_NAME}" | sed -n 's/.*"\(https:\/\/[^"]*\)".*/\1/p')
 
 if [ -z "$DOWNLOAD_URL" ]; then
     echo "Error: Could not find release asset for ${ASSET_NAME}"
