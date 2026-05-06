@@ -15,6 +15,11 @@ type Board struct {
 	game *chess.Game
 }
 
+// NewGame creates a brand new board with the standard starting position for a full game.
+func NewGame() *Board {
+	return &Board{game: chess.NewGame()}
+}
+
 // NewFromPGN creates a new board state from a space-separated string of moves.
 // The Lichess puzzle API provides the game's moves as a simple space-separated
 // string in SAN (Standard Algebraic Notation), not a full PGN with headers.
@@ -46,6 +51,29 @@ func (b *Board) Move(uci string) error {
 		return fmt.Errorf("invalid move: %w", err)
 	}
 	return nil
+}
+
+// FEN returns the current FEN string of the board position.
+func (b *Board) FEN() string {
+	return b.game.FEN()
+}
+
+// IsGameOver returns true if the game has ended (checkmate, stalemate, draw, etc).
+func (b *Board) IsGameOver() bool {
+	return b.game.Outcome() != chess.NoOutcome
+}
+
+// Outcome returns the raw outcome of the game (WhiteWon, BlackWon, Draw, NoOutcome).
+func (b *Board) Outcome() chess.Outcome {
+	return b.game.Outcome()
+}
+
+// Result returns a human-readable result of the game.
+func (b *Board) Result() string {
+	if b.game.Outcome() == chess.NoOutcome {
+		return "In progress"
+	}
+	return fmt.Sprintf("%s by %s", b.game.Outcome().String(), b.game.Method().String())
 }
 
 // Render draws the board to the provided writer (e.g., os.Stdout).

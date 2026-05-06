@@ -13,10 +13,18 @@ Built for developers and terminal power users who want a quick chess puzzle fix 
 
 ## Installation
 
-Install `pawned` using our quick installer script. This works on macOS and Linux.
+### macOS and Linux
+Install `pawned` using our quick installer script:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Killiivalavan/pawned-cli/main/install.sh | bash
+```
+
+### Windows
+Open PowerShell as an Administrator and run the following command to automatically download and install `pawned` and add it to your PATH:
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/Killiivalavan/pawned-cli/main/install.ps1 | iex
 ```
 
 ## Usage
@@ -37,9 +45,19 @@ If you know the Lichess ID of a puzzle, you can play it directly:
 pawned play --id pId3s
 ```
 
+### Play against Local AI (New in v2!)
+
+Play a full chess game directly in your terminal against the world-class Stockfish engine! You'll be prompted to select your difficulty from Beginner to Expert.
+
+*(Note: The first time you run this command, `pawned` will seamlessly download the ~50MB Stockfish binary for your OS. It runs entirely locally on your machine.)*
+
+```bash
+pawned play --ai
+```
+
 ### View Your Stats
 
-Check your progress, including total puzzles solved and your accuracy:
+Check your progress, including total puzzles solved, your accuracy, and your record against the AI:
 
 ```bash
 pawned stats

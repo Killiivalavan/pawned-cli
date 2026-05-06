@@ -6,7 +6,15 @@ import "time"
 type Data struct {
 	Version int           `json:"version"`
 	Stats   Stats         `json:"stats"`
+	AIGames AIGames       `json:"aiGames"`
 	History []HistoryItem `json:"history"`
+}
+
+// AIGames holds the user's statistics against the local AI engine.
+type AIGames struct {
+	Wins   int `json:"wins"`
+	Losses int `json:"losses"`
+	Draws  int `json:"draws"`
 }
 
 // Stats holds the user's aggregate puzzle-solving statistics.

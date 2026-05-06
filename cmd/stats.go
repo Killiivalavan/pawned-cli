@@ -52,8 +52,23 @@ var statsCmd = &cobra.Command{
 			fmt.Printf("First puzzle played on %s.\n", stats.FirstPlayedAt.Format("Jan 2, 2006"))
 		}
 
-		// TODO: Implement most common themes calculation
-		fmt.Println("\nMost common themes will be displayed here.")
+		// AI Games Stats
+		fmt.Println()
+		header.Println("AI Games")
+		if data.AIGames.Wins == 0 && data.AIGames.Losses == 0 && data.AIGames.Draws == 0 {
+			fmt.Println("\nNo AI games played yet. Use 'pawned play --ai' to start!")
+		} else {
+			totalAIGames := data.AIGames.Wins + data.AIGames.Losses + data.AIGames.Draws
+			winRate := 0.0
+			if totalAIGames > 0 {
+				winRate = (float64(data.AIGames.Wins) / float64(totalAIGames)) * 100
+			}
+			fmt.Printf("\n%-20s %d\n", "Games Played:", totalAIGames)
+			fmt.Printf("%-20s %d\n", "Wins:", data.AIGames.Wins)
+			fmt.Printf("%-20s %d\n", "Losses:", data.AIGames.Losses)
+			fmt.Printf("%-20s %d\n", "Draws:", data.AIGames.Draws)
+			fmt.Printf("%-20s %.2f%%\n", "Win Rate:", winRate)
+		}
 	},
 }
 
