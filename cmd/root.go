@@ -11,7 +11,7 @@ var rootCmd = &cobra.Command{
 	Use:   "chesshell",
 	Short: "A minimal, elegant, command-line chess puzzle tool.",
 	Long: `chesshell is a CLI tool that fetches chess puzzles from Lichess
-and lets users solve them directly in the terminal.
+and lets you play games against a local AI directly in the terminal.
 
 No account required, no configuration needed. All stats and history
 are stored locally on your machine.`,
