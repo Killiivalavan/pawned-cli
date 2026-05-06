@@ -36,5 +36,4 @@ pawned-*
 .fleet/
 
 # Project Management Documents
-PRD.md
-ROADMAP.md
+dev_docs/

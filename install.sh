@@ -3,7 +3,7 @@
 
 set -e
 
-REPO="pawned-cli/pawned"
+REPO="Killiivalavan/pawned-cli"
 BIN_NAME="pawned"
 BIN_DIR="$HOME/.local/bin"
 

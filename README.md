@@ -16,10 +16,8 @@ Built for developers and terminal power users who want a quick chess puzzle fix 
 Install `pawned` using our quick installer script. This works on macOS and Linux.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pawned-cli/pawned/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Killiivalavan/pawned-cli/main/install.sh | bash
 ```
-
-*(Note: Replace `pawned-cli` in the URL with your actual GitHub username if you fork or host this yourself).*
 
 ## Usage
 
