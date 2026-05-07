@@ -1,106 +1,86 @@
-# chesshell: Chess Drill CLI
+# chesshell: Technical Documentation
 
-A minimal, elegant command-line tool that fetches chess puzzles from Lichess and lets users solve them directly in the terminal.
+A minimal, high-performance chess tool for the terminal. `chesshell` is designed to provide a distraction-free environment for chess puzzles and AI games, prioritizing speed, local-first data persistence, and zero-configuration setup.
 
-Built for developers and terminal power users who want a quick chess puzzle fix without leaving their command line. No account required, no configuration needed.
+## Architecture Overview
 
-## Features
+The project is structured into several modular packages within the `internal/` directory, following standard Go project layouts.
 
-- **Zero auth:** No Lichess account required.
-- **Zero config:** Works immediately after install.
-- **Local-first:** All user data (stats, history) lives on your machine.
-- **Single binary:** Fast, self-contained executable.
-- **Local AI:** Play full games vs Stockfish (downloads on first use).
+### `internal/board`
+The core state machine. It wraps the `github.com/corentings/chess` library to manage game logic.
+- **Rendering**: Implements two distinct rendering pipelines:
+  - **Graphical (Unicode)**: Uses Unicode chess glyphs, ANSI background colors for square parity, and high-contrast foreground coloring.
+  - **Classic (ASCII)**: A fallback renderer for legacy terminals using alphanumeric characters.
+- **Detection**: Automatically detects terminal capabilities (`UTF-8` support) via environment variable analysis (`LANG`, `TERM`, etc.).
 
-## Installation
+### `internal/engine`
+Manages communication with the Stockfish chess engine.
+- **UCI Protocol**: Implements the Universal Chess Interface (UCI) protocol via stdin/stdout pipes.
+- **Lifecycle**: Handles the automatic downloading, caching, and execution of platform-specific Stockfish binaries if they are not found in the system `PATH`.
 
-### macOS and Linux
-Install `chesshell` using our quick installer script:
+### `internal/api`
+A thin client for the Lichess.org API.
+- **Zero Auth**: Uses public, unauthenticated endpoints to fetch daily puzzles or specific puzzle IDs.
+- **Fault Tolerance**: Implements custom error handling for rate-limiting (429) and network timeouts.
 
+### `internal/store`
+The persistence layer.
+- **Local-First**: Data is stored in a single `data.json` file in the user's config directory (e.g., `~/.config/chesshell/`).
+- **State Management**: Tracks aggregate statistics, puzzle history, and the **Resume** state for unfinished AI games.
+
+---
+
+## Project Structure
+
+```text
+├── cmd/                # Cobra command definitions (entry points)
+├── internal/
+│   ├── api/            # Lichess API integration
+│   ├── board/          # Board logic and ASCII/Unicode rendering
+│   ├── engine/         # Stockfish process management & binary downloader
+│   ├── puzzle/         # Session managers for Puzzles and AI Games
+│   └── store/          # JSON persistence and data models
+├── main.go             # Application entry point
+└── data.json           # (Created at runtime) Local state & config
+```
+
+---
+
+## Development & Contribution
+
+### Prerequisites
+- **Go**: 1.26.2 or higher.
+- **Git**: For version control.
+- **Stockfish**: (Optional) The tool will download it automatically, but you can use a system-installed version if available in your `PATH`.
+
+### Building from Source
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Killiivalavan/chesshell-cli/main/install.sh | bash
+git clone https://github.com/Killiivalavan/chesshell-cli.git
+cd chesshell-cli
+go build -o chesshell main.go
 ```
 
-### Windows
-Open PowerShell as an Administrator and run the following command to automatically download and install `chesshell` and add it to your PATH:
+### Core Principles for Contributors
+When contributing, please adhere to these architectural constraints:
+1. **Minimalism**: Avoid adding dependencies. Prefer the Go standard library or high-quality, lightweight packages.
+2. **Zero Config**: Features should work immediately. If a feature requires configuration, provide sensible defaults and an interactive setup.
+3. **Local-First**: Never require a network connection for features that don't strictly need it (like AI games or stats).
+4. **Non-Destructive Migrations**: When updating `data.json` schemas, ensure old versions are migrated without data loss.
 
-```powershell
-iwr -useb https://raw.githubusercontent.com/Killiivalavan/chesshell-cli/main/install.ps1 | iex
-```
+### Code Style
+- Run `go fmt ./...` before committing.
+- Ensure all exported symbols have concise, descriptive comments.
+- Keep the `cmd/` package thin; move business logic into `internal/`.
 
-## Usage
+---
 
-### Play the Daily Puzzle
-
-Fetch today's featured puzzle from Lichess and start an interactive session:
-
-```bash
-chesshell play
-```
-
-### Play a Specific Puzzle
-
-If you know the Lichess ID of a puzzle, you can play it directly:
-
-```bash
-chesshell play --id pId3s
-```
-
-### Play against Local AI
-
-Play a full chess game directly in your terminal against the world-class Stockfish engine! You'll be prompted to select your difficulty from Beginner to Expert.
-
-*(Note: The first time you run this command, `chesshell` will seamlessly download the ~50MB Stockfish binary for your OS. It runs entirely locally on your machine.)*
-
-```bash
-chesshell play --ai
-```
-Difficulty is selected interactively (1–5), and `q`/`quit` abandons the game. (`hint` is not available in AI games.)
-
-### View Your Stats
-
-Check your progress, including total puzzles solved, your accuracy, and your record against the AI:
-
-```bash
-chesshell stats
-```
-
-### View History
-
-See a table of your most recently attempted puzzles:
-
-```bash
-chesshell history
-```
-
-You can limit the number of entries shown using the `--limit` flag:
-
-```bash
-chesshell history --limit 5
-```
-
-## How It Works
-
-`chesshell` interacts with the public, unauthenticated endpoints of the [Lichess API](https://lichess.org/api) to fetch puzzle data and PGN move sequences. 
-
-The application reconstructs the board state locally and validates your inputs against the puzzle's solution. All of your personal statistics and history are saved locally on your machine in a simple `data.json` file.
-
-For AI games, `chesshell` runs Stockfish locally via the UCI protocol. If Stockfish is not found on your system `PATH`, `chesshell` caches a downloaded copy under your OS config directory.
-
-## Input Format
-
-When playing a puzzle, enter your moves using **UCI (Universal Chess Interface) notation**.
-
-- Example: `e2e4` (moves a piece from e2 to e4)
-- Captures: `f3d5` (moves a piece from f3 to capture on d5)
-- Promotion: `e7e8q` (promotes a pawn on e8 to a queen)
-
-If you get stuck, type `hint` (or `h`) to see which square the correct piece moves from. Type `quit` (or `q`) to abandon the puzzle.
-
-## Contributing
-
-Contributions are welcome! Please ensure that your pull requests adhere to the core principles of the project: simple, elegant, efficient, and quick. Avoid scope creep.
+## Data Schema (`data.json`)
+The application persists data using the following schema:
+- `config`: User preferences (e.g., `unicode` mode).
+- `stats`: Aggregate win/loss and solve counts.
+- `aiGames`: Specific records for games against Stockfish.
+- `currentGame`: Mid-game state (FEN and difficulty) to support the **Resume** feature.
+- `history`: A rolling buffer of the last 200 puzzle attempts.
 
 ## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

@@ -4,10 +4,24 @@ import "time"
 
 // Data represents the entire structure of the local data file (e.g., data.json).
 type Data struct {
-	Version int           `json:"version"`
-	Stats   Stats         `json:"stats"`
-	AIGames AIGames       `json:"aiGames"`
-	History []HistoryItem `json:"history"`
+	Version     int           `json:"version"`
+	Config      Config        `json:"config"`
+	Stats       Stats         `json:"stats"`
+	AIGames     AIGames       `json:"aiGames"`
+	CurrentGame *CurrentGame  `json:"currentGame,omitempty"`
+	History     []HistoryItem `json:"history"`
+}
+
+// CurrentGame stores the state of an unfinished AI game.
+type CurrentGame struct {
+	FEN        string `json:"fen"`
+	Difficulty int    `json:"difficulty"`
+	UserColor  string `json:"userColor"` // "white" or "black"
+}
+
+// Config holds user preferences.
+type Config struct {
+	Unicode *bool `json:"unicode,omitempty"`
 }
 
 // AIGames holds the user's statistics against the local AI engine.

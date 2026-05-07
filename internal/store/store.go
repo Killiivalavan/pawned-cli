@@ -18,14 +18,23 @@ var (
 	ErrCorruptedFile = errors.New("data file is corrupted")
 )
 
-// getPath determines the full path to the data file based on the OS.
-func getPath() (string, error) {
+// GetPath determines the full path to the data file based on the OS.
+func GetPath() (string, error) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
 	appDir := filepath.Join(configDir, appName)
 	return filepath.Join(appDir, dataFileName), nil
+}
+
+// GetDataDir returns the directory where chesshell data is stored.
+func GetDataDir() (string, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(configDir, appName), nil
 }
 
 func getLegacyPath() (string, error) {
@@ -41,7 +50,7 @@ func getLegacyPath() (string, error) {
 // If the file doesn't exist, it returns a new, empty Data object.
 // If the file is corrupted, it backs it up and returns an empty Data object.
 func Load() (*Data, error) {
-	path, err := getPath()
+	path, err := GetPath()
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +73,9 @@ func Load() (*Data, error) {
 			if decodeErr := json.NewDecoder(legacyFile).Decode(&legacyData); decodeErr != nil {
 				return &Data{Version: fileVersion, History: []HistoryItem{}}, ErrCorruptedFile
 			}
+			if legacyData.History == nil {
+				legacyData.History = []HistoryItem{}
+			}
 
 			return &legacyData, nil
 		}
@@ -83,13 +95,17 @@ func Load() (*Data, error) {
 		return &Data{Version: fileVersion, History: []HistoryItem{}}, ErrCorruptedFile
 	}
 
+	if data.History == nil {
+		data.History = []HistoryItem{}
+	}
+
 	return &data, nil
 }
 
 // Save writes the data to the disk.
 // It ensures the directory exists before writing.
 func Save(data *Data) error {
-	path, err := getPath()
+	path, err := GetPath()
 	if err != nil {
 		return err
 	}

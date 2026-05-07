@@ -12,12 +12,14 @@ import (
 // Board represents the state of a chess puzzle.
 // It wraps the underlying chess engine and provides a high-level API.
 type Board struct {
-	game *chess.Game
+	game    *chess.Game
+	Unicode bool
+	Flipped bool // If true, render from Black's perspective
 }
 
 // NewGame creates a brand new board with the standard starting position for a full game.
 func NewGame() *Board {
-	return &Board{game: chess.NewGame()}
+	return &Board{game: chess.NewGame(), Unicode: IsUnicodeSupported(), Flipped: false}
 }
 
 // NewFromPGN creates a new board state from a space-separated string of moves.
@@ -38,7 +40,17 @@ func NewFromPGN(pgn string) (*Board, error) {
 		}
 	}
 
-	return &Board{game: game}, nil
+	return &Board{game: game, Unicode: IsUnicodeSupported(), Flipped: false}, nil
+}
+
+// NewFromFEN creates a new board state from a FEN string.
+func NewFromFEN(fen string) (*Board, error) {
+	f, err := chess.FEN(fen)
+	if err != nil {
+		return nil, fmt.Errorf("invalid FEN: %w", err)
+	}
+	game := chess.NewGame(f)
+	return &Board{game: game, Unicode: IsUnicodeSupported(), Flipped: false}, nil
 }
 
 // Move validates and applies a move in UCI notation.
@@ -76,9 +88,81 @@ func (b *Board) Result() string {
 	return fmt.Sprintf("%s by %s", b.game.Outcome().String(), b.game.Method().String())
 }
 
+// FENColor returns the color of the player whose turn it is to move.
+func (b *Board) FENColor() chess.Color {
+	return b.game.Position().Turn()
+}
+
 // Render draws the board to the provided writer (e.g., os.Stdout).
 // It follows the formatting and coloring rules specified in the PRD.
 func (b *Board) Render(w io.Writer) {
+	if b.Unicode {
+		b.renderUnicode(w)
+		return
+	}
+	b.renderASCII(w)
+}
+
+func (b *Board) renderUnicode(w io.Writer) {
+	coordColor := color.New(color.FgHiBlack)
+
+	// Top coordinates
+	fmt.Fprint(w, "  ")
+	if b.Flipped {
+		coordColor.Fprint(w, "h g f e d c b a\n")
+	} else {
+		coordColor.Fprint(w, "a b c d e f g h\n")
+	}
+
+	boardMap := b.game.Position().Board().SquareMap()
+
+	ranks := []int{7, 6, 5, 4, 3, 2, 1, 0}
+	files := []int{0, 1, 2, 3, 4, 5, 6, 7}
+	if b.Flipped {
+		ranks = []int{0, 1, 2, 3, 4, 5, 6, 7}
+		files = []int{7, 6, 5, 4, 3, 2, 1, 0}
+	}
+
+	for _, i := range ranks {
+		rank := chess.Rank(i)
+		coordColor.Fprintf(w, "%d ", rank+1)
+
+		for _, j := range files {
+			file := chess.File(j)
+			sq := chess.NewSquare(file, rank)
+			piece, exists := boardMap[sq]
+
+			sqBg := color.BgWhite
+			if (int(rank)+int(file))%2 != 0 {
+				sqBg = color.BgYellow
+			}
+
+			if !exists {
+				color.New(sqBg).Fprint(w, "  ")
+			} else {
+				pieceStr := pieceToUnicode(piece)
+				// Using FgBlack for all Unicode pieces (outline for white, filled for black)
+				// ensures maximum consistency across different background colors.
+				color.New(sqBg, color.FgBlack, color.Bold).Fprintf(w, "%s ", pieceStr)
+			}
+		}
+
+		coordColor.Fprintf(w, " %d\n", rank+1)
+	}
+
+	// Bottom coordinates
+	fmt.Fprint(w, "  ")
+	if b.Flipped {
+		coordColor.Fprint(w, "h g f e d c b a\n")
+	} else {
+		coordColor.Fprint(w, "a b c d e f g h\n")
+	}
+
+	turn := b.game.Position().Turn()
+	fmt.Fprintf(w, "\n  %s to move\n", turn.Name())
+}
+
+func (b *Board) renderASCII(w io.Writer) {
 	// Custom color settings for the board.
 	coordColor := color.New(color.FgHiBlack) // Dim color for coords
 	whitePieceColor := color.New(color.FgWhite, color.Bold)
@@ -86,18 +170,29 @@ func (b *Board) Render(w io.Writer) {
 
 	// Top coordinates
 	fmt.Fprint(w, "  ")
-	coordColor.Fprint(w, "a b c d e f g h\n")
+	if b.Flipped {
+		coordColor.Fprint(w, "h g f e d c b a\n")
+	} else {
+		coordColor.Fprint(w, "a b c d e f g h\n")
+	}
 
 	// Get board state (square -> piece)
 	boardMap := b.game.Position().Board().SquareMap()
 
-	// Iterate over ranks (8 to 1)
-	for i := 7; i >= 0; i-- {
+	ranks := []int{7, 6, 5, 4, 3, 2, 1, 0}
+	files := []int{0, 1, 2, 3, 4, 5, 6, 7}
+	if b.Flipped {
+		ranks = []int{0, 1, 2, 3, 4, 5, 6, 7}
+		files = []int{7, 6, 5, 4, 3, 2, 1, 0}
+	}
+
+	// Iterate over ranks
+	for _, i := range ranks {
 		rank := chess.Rank(i)
 		coordColor.Fprintf(w, "%d ", rank+1) // Print rank number
 
-		// Iterate over files (a to h)
-		for j := 0; j < 8; j++ {
+		// Iterate over files
+		for _, j := range files {
 			file := chess.File(j)
 			sq := chess.NewSquare(file, rank)
 			piece, exists := boardMap[sq]
@@ -121,11 +216,50 @@ func (b *Board) Render(w io.Writer) {
 
 	// Bottom coordinates
 	fmt.Fprint(w, "  ")
-	coordColor.Fprint(w, "a b c d e f g h\n")
+	if b.Flipped {
+		coordColor.Fprint(w, "h g f e d c b a\n")
+	} else {
+		coordColor.Fprint(w, "a b c d e f g h\n")
+	}
 
 	// Add whose turn it is
 	turn := b.game.Position().Turn()
 	fmt.Fprintf(w, "\n  %s to move\n", turn.Name())
+}
+
+func pieceToUnicode(p chess.Piece) string {
+	if p.Color() == chess.White {
+		switch p.Type() {
+		case chess.King:
+			return "♔"
+		case chess.Queen:
+			return "♕"
+		case chess.Rook:
+			return "♖"
+		case chess.Bishop:
+			return "♗"
+		case chess.Knight:
+			return "♘"
+		case chess.Pawn:
+			return "♙"
+		}
+	} else {
+		switch p.Type() {
+		case chess.King:
+			return "♚"
+		case chess.Queen:
+			return "♛"
+		case chess.Rook:
+			return "♜"
+		case chess.Bishop:
+			return "♝"
+		case chess.Knight:
+			return "♞"
+		case chess.Pawn:
+			return "♟"
+		}
+	}
+	return ""
 }
 
 // pieceToASCII converts a chess.Piece to its PRD-specified ASCII representation.
