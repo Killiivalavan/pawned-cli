@@ -13,7 +13,8 @@ import (
 
 var updateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "Update chesshell to the latest version",
+	Short: "Update chesshell to the latest version.",
+	Long:  `Checks for new releases on GitHub and updates the application to the latest version if one is available.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		v := version
 		if v == "" {

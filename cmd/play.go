@@ -20,24 +20,38 @@ import (
 
 var playCmd = &cobra.Command{
 	Use:   "play",
-	Short: "Fetches a puzzle or starts an AI game.",
-	Long:  `Starts an interactive solving session for a Lichess puzzle or plays a full game against a local AI.`,
+	Short: "Start a new chess game or puzzle.",
+	Long:  `The main command for starting a chess game. Use flags to select a mode, such as challenging the AI, playing a friend, or solving a puzzle.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		id, _ := cmd.Flags().GetString("id")
+		puzzleFlag, _ := cmd.Flags().GetBool("puzzle")
+		puzzleID, _ := cmd.Flags().GetString("id")
 		ai, _ := cmd.Flags().GetBool("ai")
-		multiplayer, _ := cmd.Flags().GetBool("multiplayer")
+		friend, _ := cmd.Flags().GetBool("friend")
 		joinCode, _ := cmd.Flags().GetString("join")
 		unicodeFlag, _ := cmd.Flags().GetBool("unicode")
 
-		count := 0
-		if id != "" { count++ }
-		if ai { count++ }
-		if multiplayer { count++ }
-		if joinCode != "" { count++ }
+		// Count the number of mode flags used
+		modeCount := 0
+		if puzzleFlag || puzzleID != "" { modeCount++ }
+		if ai { modeCount++ }
+		if friend { modeCount++ }
+		if joinCode != "" { modeCount++ }
 
-		if count > 1 {
-			fmt.Println("Error: Cannot use --id, --ai, --multiplayer, or --join simultaneously.")
+		if modeCount == 0 {
+			fmt.Println("Error: No game mode selected.")
+			fmt.Println("Usage: chesshell play [--puzzle | --ai | --friend | --join CODE]")
+			fmt.Println("Run 'chesshell play --help' for more details.")
 			os.Exit(1)
+		}
+
+		if modeCount > 1 {
+			fmt.Println("Error: Cannot use --puzzle, --ai, --friend, or --join simultaneously.")
+			os.Exit(1)
+		}
+		
+		// If --id is used, --puzzle is implied
+		if puzzleID != "" {
+			puzzleFlag = true
 		}
 
 		// 1. Load Data to get config
@@ -51,64 +65,14 @@ var playCmd = &cobra.Command{
 		}
 
 		// 2. Resolve Graphical Board (Unicode) preference
-		useUnicode := board.IsUnicodeSupported()
-		configChanged := false
+		useUnicode := resolveUnicode(data, unicodeFlag)
 
-		if data.Config.Unicode == nil {
-			// First time setup or migration
-			if useUnicode {
-				fmt.Print("Graphical Board support detected! Would you like to enable high-fidelity rendering? (Y/n): ")
-				reader := bufio.NewReader(os.Stdin)
-				input, _ := reader.ReadString('\n')
-				input = strings.ToLower(strings.TrimSpace(input))
-				
-				choice := true
-				if input == "n" || input == "no" {
-					choice = false
-				}
-				data.Config.Unicode = &choice
-				useUnicode = choice
-				configChanged = true
-			} else {
-				f := false
-				data.Config.Unicode = &f
-				useUnicode = false
-				configChanged = true
-			}
-		} else if !*data.Config.Unicode && useUnicode {
-			// Supported but disabled in config
-			fmt.Print("Graphical Board (Unicode) is supported but disabled in your config. Enable it now? (y/N): ")
-			reader := bufio.NewReader(os.Stdin)
-			input, _ := reader.ReadString('\n')
-			input = strings.ToLower(strings.TrimSpace(input))
-
-			if input == "y" || input == "yes" {
-				t := true
-				data.Config.Unicode = &t
-				useUnicode = true
-				configChanged = true
-			} else {
-				useUnicode = false
-			}
-		} else {
-			useUnicode = *data.Config.Unicode
-		}
-
-		if unicodeFlag {
-			useUnicode = true
-		}
-
-		if configChanged {
-			if err := store.Save(data); err != nil {
-				fmt.Printf("Warning: Could not save config: %v\n", err)
-			}
-		}
-
+		// 3. Route to the correct game mode
 		if ai {
 			runAIGame(data, useUnicode)
 			return
 		}
-		if multiplayer {
+		if friend {
 			runMultiplayerCreate(data, useUnicode)
 			return
 		}
@@ -116,13 +80,55 @@ var playCmd = &cobra.Command{
 			runMultiplayerJoin(data, joinCode, useUnicode)
 			return
 		}
-
-		runPuzzle(data, id, useUnicode)
+		if puzzleFlag {
+			runPuzzle(data, puzzleID, useUnicode)
+			return
+		}
 	},
 }
 
+// resolveUnicode handles the logic for determining if unicode should be used
+func resolveUnicode(data *store.Data, unicodeFlag bool) bool {
+	if unicodeFlag {
+		return true
+	}
+
+	useUnicode := board.IsUnicodeSupported()
+	configChanged := false
+	
+	if data.Config.Unicode == nil {
+		if useUnicode {
+			fmt.Print("Graphical Board support detected! Enable it for a better experience? (Y/n): ")
+			reader := bufio.NewReader(os.Stdin)
+			input, _ := reader.ReadString('\n')
+			input = strings.ToLower(strings.TrimSpace(input))
+			
+			choice := input != "n" && input != "no"
+			data.Config.Unicode = &choice
+			useUnicode = choice
+			configChanged = true
+		} else {
+			f := false
+			data.Config.Unicode = &f
+			useUnicode = false
+			configChanged = true
+		}
+	} else {
+		useUnicode = *data.Config.Unicode
+	}
+
+	if configChanged {
+		if err := store.Save(data); err != nil {
+			fmt.Printf("Warning: Could not save config: %v\n", err)
+		}
+	}
+	
+	return useUnicode
+}
+
+
 func runMultiplayerCreate(data *store.Data, useUnicode bool) {
-	fmt.Println("Creating multiplayer game...")
+	fmt.Println("Creating a game for a friend...")
 	client := relay.NewClient("")
 	code, err := client.CreateGame()
 	if err != nil {
@@ -131,8 +137,8 @@ func runMultiplayerCreate(data *store.Data, useUnicode bool) {
 	}
 
 	fmt.Printf("\nYour game code is: %s\n", code)
-	fmt.Println("Share this with your opponent.")
-	fmt.Println("Waiting for opponent to connect...")
+	fmt.Println("Share this with your friend to have them join.")
+	fmt.Println("Waiting for friend to connect...")
 
 	session := relay.NewSession(client)
 	if err := session.Connect(code); err != nil {
@@ -143,11 +149,11 @@ func runMultiplayerCreate(data *store.Data, useUnicode bool) {
 
 	colorStr, err := session.WaitForOpponent()
 	if err != nil {
-		fmt.Printf("Error waiting for opponent: %v\n", err)
+		fmt.Printf("Error waiting for friend: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("\nOpponent joined! You are playing as %s.\n", colorStr)
+	fmt.Printf("\nFriend joined! You are playing as %s.\n", colorStr)
 
 	gameSession := puzzle.NewMultiplayerSession(session, os.Stdin, os.Stdout, colorStr)
 	gameSession.Board.Unicode = useUnicode
@@ -161,15 +167,12 @@ func runMultiplayerCreate(data *store.Data, useUnicode bool) {
 	if result == "Abandoned" {
 		return
 	}
-
-	// Update stats (requires Phase 3.5 updates to models.go, assuming MultiplayerGames exists)
-	// For now, we will add the struct fields in Phase 3.5 and uncomment this, or do it now.
 	updateMultiplayerStats(data, gameSession.UserColor, gameSession.Board.Outcome())
 }
 
 func runMultiplayerJoin(data *store.Data, code string, useUnicode bool) {
 	code = strings.ToUpper(strings.TrimSpace(code))
-	fmt.Printf("Joining game %s...\n", code)
+	fmt.Printf("Joining friend's game %s...\n", code)
 	
 	client := relay.NewClient("")
 	exists, err := client.ValidateCode(code)
@@ -213,7 +216,6 @@ func runMultiplayerJoin(data *store.Data, code string, useUnicode bool) {
 	if result == "Abandoned" {
 		return
 	}
-
 	updateMultiplayerStats(data, gameSession.UserColor, gameSession.Board.Outcome())
 }
 
@@ -265,7 +267,6 @@ func runAIGame(data *store.Data, useUnicode bool) {
 		fmt.Println("Invalid input. Please enter a number between 1 and 5.")
 	}
 
-	// Color Selection
 	var userColor chess.Color
 	for {
 		fmt.Print("Select your color (w/b): ")
@@ -281,7 +282,6 @@ func runAIGame(data *store.Data, useUnicode bool) {
 		fmt.Println("Invalid input. Enter 'w' for White or 'b' for Black.")
 	}
 
-	// Map 1-5 to Stockfish skill levels (0-20)
 	skillLevel := (difficulty - 1) * 5
 	fmt.Printf("Starting AI game as %s with Skill Level %d (Difficulty %d)...\n", userColor.Name(), skillLevel, difficulty)
 
@@ -303,7 +303,6 @@ func runAIGame(data *store.Data, useUnicode bool) {
 		os.Exit(1)
 	}
 
-	// Initial save for resume feature
 	data.CurrentGame = &store.CurrentGame{
 		FEN:        chess.NewGame().FEN(),
 		Difficulty: difficulty,
@@ -316,7 +315,6 @@ func runAIGame(data *store.Data, useUnicode bool) {
 	session := puzzle.NewAISession(eng, os.Stdin, os.Stdout, userColor, difficulty)
 	session.Board.Unicode = useUnicode
 	
-	// Setup OnMove callback
 	session.OnMove = func(fen string) {
 		data.CurrentGame.FEN = fen
 		_ = store.Save(data)
@@ -332,7 +330,6 @@ func runAIGame(data *store.Data, useUnicode bool) {
 		return
 	}
 
-	// Game finished, cleanup
 	data.CurrentGame = nil
 
 	switch session.Board.Outcome() {
@@ -360,7 +357,6 @@ func runAIGame(data *store.Data, useUnicode bool) {
 }
 
 func runPuzzle(data *store.Data, id string, useUnicode bool) {
-	// 1. Fetch Puzzle
 	apiClient := api.NewClient()
 	var lichessPuzzle *api.LichessPuzzle
 	var err error
@@ -376,7 +372,6 @@ func runPuzzle(data *store.Data, id string, useUnicode bool) {
 		os.Exit(1)
 	}
 
-	// 2. Run Session
 	session, err := puzzle.NewSession(lichessPuzzle, os.Stdin, os.Stdout)
 	if err != nil {
 		fmt.Printf("Error creating session: %v\n", err)
@@ -390,13 +385,10 @@ func runPuzzle(data *store.Data, id string, useUnicode bool) {
 		os.Exit(1)
 	}
 
-	// A puzzle is only recorded if at least one move was attempted.
-	// Quitting immediately does not count.
 	if attempts == 0 && !solved {
 		return
 	}
 
-	// Create history item
 	historyItem := store.HistoryItem{
 		PuzzleID:    lichessPuzzle.Puzzle.ID,
 		Rating:      lichessPuzzle.Puzzle.Rating,
@@ -407,19 +399,16 @@ func runPuzzle(data *store.Data, id string, useUnicode bool) {
 	}
 	data.History = append(data.History, historyItem)
 
-	// Update stats
 	data.Stats.TotalAttempted++
 	if solved {
 		data.Stats.TotalSolved++
 	}
-	// TODO: Streak calculation
 	now := time.Now()
 	if data.Stats.FirstPlayedAt == nil {
 		data.Stats.FirstPlayedAt = &now
 	}
 	data.Stats.LastPlayedAt = &now
 
-	// Limit history
 	if len(data.History) > 200 {
 		data.History = data.History[len(data.History)-200:]
 	}
@@ -433,9 +422,10 @@ func runPuzzle(data *store.Data, id string, useUnicode bool) {
 
 func init() {
 	rootCmd.AddCommand(playCmd)
-	playCmd.Flags().String("id", "", "Play a specific puzzle by its Lichess ID.")
-	playCmd.Flags().Bool("ai", false, "Play a full game against a local AI.")
-	playCmd.Flags().BoolP("multiplayer", "m", false, "Start a multiplayer game and wait for an opponent.")
-	playCmd.Flags().StringP("join", "j", "", "Join an existing multiplayer game using a code.")
+	playCmd.Flags().Bool("puzzle", false, "Solve the daily Lichess puzzle.")
+	playCmd.Flags().String("id", "", "Solve a specific puzzle by its Lichess ID (implies --puzzle).")
+	playCmd.Flags().Bool("ai", false, "Challenge the local Stockfish AI.")
+	playCmd.Flags().BoolP("friend", "f", false, "Play a game against a friend online.")
+	playCmd.Flags().StringP("join", "j", "", "Join a friend's game using a code.")
 	playCmd.Flags().Bool("unicode", false, "Force Graphical Board (Unicode) mode for board rendering.")
 }

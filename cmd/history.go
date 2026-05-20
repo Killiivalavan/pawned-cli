@@ -13,7 +13,8 @@ import (
 
 var historyCmd = &cobra.Command{
 	Use:   "history",
-	Short: "Show the last puzzles the user attempted.",
+	Short: "Display the history of recently played puzzles.",
+	Long:  `Shows a list of the last 200 puzzles you have attempted, including the date, rating, and whether you solved them.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		limit, _ := cmd.Flags().GetInt("limit")
 

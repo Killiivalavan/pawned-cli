@@ -15,7 +15,8 @@ import (
 
 var resumeCmd = &cobra.Command{
 	Use:   "resume",
-	Short: "Resume the last unfinished AI game.",
+	Short: "Resume your last unfinished game.",
+	Long:  `Resumes your last game against the AI, picking up exactly where you left off.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		data, err := store.Load()
 		if err != nil && err != store.ErrCorruptedFile {

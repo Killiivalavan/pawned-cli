@@ -13,14 +13,23 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "chesshell",
 	Short: "A minimal, elegant, command-line chess puzzle tool.",
-	Long: `chesshell is a CLI tool that fetches chess puzzles from Lichess
-and lets you play games against a local AI directly in the terminal.
+	Long: `A beautiful, command-line chess experience.
 
-Key Features:
-  - Graphical Board: Optional high-fidelity rendering for modern terminals.
-  - Game Resume: Pick up your AI games exactly where you left off.
-  - Zero Config: Works out of the box with local-first stats and history.
-  - Privacy Focused: No accounts required; all data stays on your machine.`,
+chesshell is a modern CLI for chess enthusiasts. Play against a local AI, 
+challenge friends to a multiplayer match, or solve daily puzzles from Lichess—all 
+from the comfort of your terminal.
+
+FEATURES
+  • Play Modes:       Challenge a local Stockfish AI with adjustable difficulty,
+                      play online against a friend, or solve daily puzzles.
+  • Multiplayer:      Create a game with a simple join code and play against
+                      anyone, anywhere.
+  • Self-Updating:    Notifies you of new versions and lets you upgrade with a
+                      single command ('chesshell update').
+  • Graphical Board:  A high-fidelity Unicode board that renders beautifully in
+                      modern terminals.
+  • Local-First:      All your stats and game history are stored locally.
+                      No accounts, no cloud sync, no nonsense.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// Skip update check if this is the update command itself
 		if cmd.Use == "update" {

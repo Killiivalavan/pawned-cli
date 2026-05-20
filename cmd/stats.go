@@ -11,7 +11,8 @@ import (
 
 var statsCmd = &cobra.Command{
 	Use:   "stats",
-	Short: "Display the user's local stats summary.",
+	Short: "View your personal game statistics.",
+	Long:  `Displays your personal game statistics, including puzzle accuracy and win/loss records for AI and multiplayer games.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		data, err := store.Load()
 		if err != nil && err != store.ErrCorruptedFile {

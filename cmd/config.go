@@ -10,7 +10,8 @@ import (
 
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Manage local configuration.",
+	Short: "View and manage user configuration.",
+	Long:  `Allows for viewing and managing user-specific configuration, such as board rendering preferences.`,
 }
 
 var configUnicodeCmd = &cobra.Command{

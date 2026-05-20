@@ -11,7 +11,8 @@ var version string
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Print the version number of chesshell.",
+	Short: "Show the currently installed version.",
+	Long:  `Prints the version number of the currently installed chesshell binary.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if version == "" {
 			version = "v0.1.0-dev" // Default for local development
