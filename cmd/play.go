@@ -6,6 +6,7 @@ import (
 	"chesshell-cli/internal/board"
 	"chesshell-cli/internal/engine"
 	"chesshell-cli/internal/puzzle"
+	"chesshell-cli/internal/relay"
 	"chesshell-cli/internal/store"
 	"fmt"
 	"os"
@@ -24,10 +25,18 @@ var playCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		id, _ := cmd.Flags().GetString("id")
 		ai, _ := cmd.Flags().GetBool("ai")
+		multiplayer, _ := cmd.Flags().GetBool("multiplayer")
+		joinCode, _ := cmd.Flags().GetString("join")
 		unicodeFlag, _ := cmd.Flags().GetBool("unicode")
 
-		if id != "" && ai {
-			fmt.Println("Error: Cannot use --id and --ai at the same time.")
+		count := 0
+		if id != "" { count++ }
+		if ai { count++ }
+		if multiplayer { count++ }
+		if joinCode != "" { count++ }
+
+		if count > 1 {
+			fmt.Println("Error: Cannot use --id, --ai, --multiplayer, or --join simultaneously.")
 			os.Exit(1)
 		}
 
@@ -99,9 +108,138 @@ var playCmd = &cobra.Command{
 			runAIGame(data, useUnicode)
 			return
 		}
+		if multiplayer {
+			runMultiplayerCreate(data, useUnicode)
+			return
+		}
+		if joinCode != "" {
+			runMultiplayerJoin(data, joinCode, useUnicode)
+			return
+		}
 
 		runPuzzle(data, id, useUnicode)
 	},
+}
+
+func runMultiplayerCreate(data *store.Data, useUnicode bool) {
+	fmt.Println("Creating multiplayer game...")
+	client := relay.NewClient("")
+	code, err := client.CreateGame()
+	if err != nil {
+		fmt.Printf("Failed to create game: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("\nYour game code is: %s\n", code)
+	fmt.Println("Share this with your opponent.")
+	fmt.Println("Waiting for opponent to connect...")
+
+	session := relay.NewSession(client)
+	if err := session.Connect(code); err != nil {
+		fmt.Printf("Connection error: %v\n", err)
+		os.Exit(1)
+	}
+	defer session.Close()
+
+	colorStr, err := session.WaitForOpponent()
+	if err != nil {
+		fmt.Printf("Error waiting for opponent: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("\nOpponent joined! You are playing as %s.\n", colorStr)
+
+	gameSession := puzzle.NewMultiplayerSession(session, os.Stdin, os.Stdout, colorStr)
+	gameSession.Board.Unicode = useUnicode
+
+	result, err := gameSession.Run()
+	if err != nil {
+		fmt.Printf("Error during game: %v\n", err)
+		os.Exit(1)
+	}
+
+	if result == "Abandoned" {
+		return
+	}
+
+	// Update stats (requires Phase 3.5 updates to models.go, assuming MultiplayerGames exists)
+	// For now, we will add the struct fields in Phase 3.5 and uncomment this, or do it now.
+	updateMultiplayerStats(data, gameSession.UserColor, gameSession.Board.Outcome())
+}
+
+func runMultiplayerJoin(data *store.Data, code string, useUnicode bool) {
+	code = strings.ToUpper(strings.TrimSpace(code))
+	fmt.Printf("Joining game %s...\n", code)
+	
+	client := relay.NewClient("")
+	exists, err := client.ValidateCode(code)
+	if err != nil {
+		fmt.Printf("Error validating code: %v\n", err)
+		os.Exit(1)
+	}
+	if !exists {
+		fmt.Printf("No game found with code %s. Check the code and try again.\n", code)
+		os.Exit(1)
+	}
+
+	session := relay.NewSession(client)
+	if err := session.Connect(code); err != nil {
+		if strings.Contains(err.Error(), "403") || strings.Contains(err.Error(), "1008") {
+			fmt.Printf("Game %s is already full.\n", code)
+		} else {
+			fmt.Printf("Connection error: %v\n", err)
+		}
+		os.Exit(1)
+	}
+	defer session.Close()
+
+	colorStr, err := session.WaitForOpponent()
+	if err != nil {
+		fmt.Printf("Error waiting for game start: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("\nJoined successfully! You are playing as %s.\n", colorStr)
+	
+	gameSession := puzzle.NewMultiplayerSession(session, os.Stdin, os.Stdout, colorStr)
+	gameSession.Board.Unicode = useUnicode
+
+	result, err := gameSession.Run()
+	if err != nil {
+		fmt.Printf("Error during game: %v\n", err)
+		os.Exit(1)
+	}
+
+	if result == "Abandoned" {
+		return
+	}
+
+	updateMultiplayerStats(data, gameSession.UserColor, gameSession.Board.Outcome())
+}
+
+func updateMultiplayerStats(data *store.Data, userColor chess.Color, outcome chess.Outcome) {
+	switch outcome {
+	case chess.WhiteWon:
+		if userColor == chess.White {
+			data.MultiplayerGames.Wins++
+		} else {
+			data.MultiplayerGames.Losses++
+		}
+	case chess.BlackWon:
+		if userColor == chess.Black {
+			data.MultiplayerGames.Wins++
+		} else {
+			data.MultiplayerGames.Losses++
+		}
+	case chess.Draw:
+		data.MultiplayerGames.Draws++
+	}
+
+	if err := store.Save(data); err != nil {
+		fmt.Printf("Error saving stats: %v\n", err)
+	} else {
+		fmt.Println("Multiplayer game stats have been saved.")
+	}
 }
 
 func runAIGame(data *store.Data, useUnicode bool) {
@@ -297,5 +435,7 @@ func init() {
 	rootCmd.AddCommand(playCmd)
 	playCmd.Flags().String("id", "", "Play a specific puzzle by its Lichess ID.")
 	playCmd.Flags().Bool("ai", false, "Play a full game against a local AI.")
+	playCmd.Flags().BoolP("multiplayer", "m", false, "Start a multiplayer game and wait for an opponent.")
+	playCmd.Flags().StringP("join", "j", "", "Join an existing multiplayer game using a code.")
 	playCmd.Flags().Bool("unicode", false, "Force Graphical Board (Unicode) mode for board rendering.")
 }

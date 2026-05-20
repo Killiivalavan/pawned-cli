@@ -69,6 +69,23 @@ var statsCmd = &cobra.Command{
 			fmt.Printf("%-20s %d\n", "Draws:", data.AIGames.Draws)
 			fmt.Printf("%-20s %.2f%%\n", "Win Rate:", winRate)
 		}
+		// Multiplayer Games Stats
+		fmt.Println()
+		header.Println("Multiplayer Games")
+		if data.MultiplayerGames.Wins == 0 && data.MultiplayerGames.Losses == 0 && data.MultiplayerGames.Draws == 0 {
+			fmt.Println("\nNo multiplayer games played yet. Use 'chesshell play --multiplayer' to start!")
+		} else {
+			totalMPGames := data.MultiplayerGames.Wins + data.MultiplayerGames.Losses + data.MultiplayerGames.Draws
+			winRate := 0.0
+			if totalMPGames > 0 {
+				winRate = (float64(data.MultiplayerGames.Wins) / float64(totalMPGames)) * 100
+			}
+			fmt.Printf("\n%-20s %d\n", "Games Played:", totalMPGames)
+			fmt.Printf("%-20s %d\n", "Wins:", data.MultiplayerGames.Wins)
+			fmt.Printf("%-20s %d\n", "Losses:", data.MultiplayerGames.Losses)
+			fmt.Printf("%-20s %d\n", "Draws:", data.MultiplayerGames.Draws)
+			fmt.Printf("%-20s %.2f%%\n", "Win Rate:", winRate)
+		}
 	},
 }
 
